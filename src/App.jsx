@@ -313,9 +313,8 @@ export default function App() {
         const normalized = sampleRecords.map(normalizeRecord);
         if (cancelled) return;
         setRecords(normalized);
-        setSelectedId(normalized[0]?.id ?? null);
-        const fallback = blankRecord(t);
-        setDraft(normalized[0] || { ...fallback, blocks: buildDefaultBlocks(fallback.tables) });
+        setSelectedId((prev) => (normalized.some(r => r.id === prev) ? prev : normalized[0]?.id ?? null));
+        setDraft((prev) => normalized.find(r => r.id === prev.id) || normalized[0] || blankRecord(t));
         return;
       }
 
@@ -331,9 +330,8 @@ export default function App() {
           setUserRecords(currentUser.id, normalized);
           prevRecordIdsRef.current = new Set(normalized.map((record) => record.id));
           setRecords(normalized);
-          setSelectedId(normalized[0]?.id ?? null);
-          const fallback = blankRecord(t);
-          setDraft(normalized[0] || { ...fallback, blocks: buildDefaultBlocks(fallback.tables) });
+          setSelectedId((prev) => (normalized.some(r => r.id === prev) ? prev : normalized[0]?.id ?? null));
+          setDraft((prev) => normalized.find(r => r.id === prev.id) || normalized[0] || blankRecord(t));
           return;
         }
 
@@ -349,9 +347,8 @@ export default function App() {
         }
         prevRecordIdsRef.current = new Set(normalized.map((record) => record.id));
         setRecords(normalized);
-        setSelectedId(normalized[0]?.id ?? null);
-        const fallback = blankRecord(t);
-        setDraft(normalized[0] || { ...fallback, blocks: buildDefaultBlocks(fallback.tables) });
+        setSelectedId((prev) => (normalized.some(r => r.id === prev) ? prev : normalized[0]?.id ?? null));
+        setDraft((prev) => normalized.find(r => r.id === prev.id) || normalized[0] || blankRecord(t));
         return;
       }
 
@@ -365,9 +362,8 @@ export default function App() {
       setUserRecords(currentUser.id, normalized);
       prevRecordIdsRef.current = new Set(normalized.map((record) => record.id));
       setRecords(normalized);
-      setSelectedId(normalized[0]?.id ?? null);
-      const fallback = blankRecord(t);
-      setDraft(normalized[0] || { ...fallback, blocks: buildDefaultBlocks(fallback.tables) });
+      setSelectedId((prev) => (normalized.some(r => r.id === prev) ? prev : normalized[0]?.id ?? null));
+      setDraft((prev) => normalized.find(r => r.id === prev.id) || normalized[0] || blankRecord(t));
     };
 
     load();
@@ -632,6 +628,7 @@ export default function App() {
       return updated;
     });
     setSelectedId(draft.id);
+    setLastSavedAt(new Date().toLocaleTimeString());
   };
 
   const handleDelete = () => {
