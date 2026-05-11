@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DragDropContext, Draggable } from 'react-beautiful-dnd';
 import StrictModeDroppable from './StrictModeDroppable.jsx';
 import SummaryBlock from './blocks/SummaryBlock.jsx';
@@ -47,7 +47,29 @@ export default function WorkspaceBlocks({
   dataMode,
   t
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        closeMenu();
+      }
+    };
+    const handleKey = (event) => {
+      if (event.key === 'Escape') closeMenu();
+    };
+    document.addEventListener('pointerdown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('pointerdown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [menuOpen, closeMenu]);
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     if (result.source.index === result.destination.index) return;
@@ -238,28 +260,47 @@ export default function WorkspaceBlocks({
         </StrictModeDroppable>
       </DragDropContext>
       <div className="workspace-footer">
-        <details className="add-block-menu action-menu" ref={menuRef}>
-          <summary className="btn ghost add-block-trigger">+ {t('addBlock')}</summary>
-          <div className="action-popover add-block-popover">
-            {addBlockOptions.map((option) => (
-              <button
-                key={option.type}
-                className="menu-item"
-                type="button"
-                disabled={!option.enabled}
-                onClick={() => {
-                  if (!option.enabled) return;
-                  onAddBlock?.(option.type);
-                  menuRef.current?.removeAttribute('open');
-                }}
-                >
-                  {option.label}
-                  {!option.enabled ? ` (${option.disabledReason})` : ''}
-                </button>
-            ))}
-          </div>
-        </details>
+        <button
+          className="btn ghost add-block-trigger"
+          type="button"
+          onClick={() => setMenuOpen(true)}
+        >
+          + {t('addBlock')}
+        </button>
       </div>
+
+      {menuOpen ? (
+        <div className="overlay" onClick={closeMenu}>
+          <div className="overlay-panel add-block-panel" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+            <div className="overlay-panel-header">
+              <h3>{t('addBlock')}</h3>
+              <button className="icon-btn ghost" type="button" onClick={closeMenu} aria-label={t('close')}>
+                x
+              </button>
+            </div>
+            <div className="overlay-panel-body add-block-grid">
+              {addBlockOptions.map((option) => (
+                <button
+                  key={option.type}
+                  className="add-block-card"
+                  type="button"
+                  disabled={!option.enabled}
+                  onClick={() => {
+                    if (!option.enabled) return;
+                    onAddBlock?.(option.type);
+                    closeMenu();
+                  }}
+                >
+                  <span className="add-block-card-label">{option.label}</span>
+                  {!option.enabled ? (
+                    <span className="add-block-card-hint">{option.disabledReason}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
